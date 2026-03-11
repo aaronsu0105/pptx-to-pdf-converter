@@ -18,12 +18,19 @@ public class ConverterController {
         }
 
         try {
-            System.out.println("Processing file: " + file.getOriginalFilename());
+            System.out.println("Processing: " + file.getOriginalFilename());
 
-            // FIX: We are now passing TWO things: the file stream AND the filename
-            byte[] pdfBytes = conversionService.convertPptxToPdf(file.getInputStream(), file.getOriginalFilename());
+            // FIX: Convert the file to a solid byte array right away
+            byte[] fileBytes = file.getBytes();
+            byte[] pdfBytes = conversionService.convertPptxToPdf(fileBytes, file.getOriginalFilename());
 
-            // Filename Logic: Replace .pptx with .pdf
+            // SAFETY NET: A valid PDF is always larger than 100 bytes. 
+            // If it's smaller, it's a corrupted file or an error message.
+            if (pdfBytes == null || pdfBytes.length < 100) {
+                System.err.println("Error: The resulting PDF is empty or corrupted.");
+                return ResponseEntity.status(HttpStatus.BAD_GATEWAY).build();
+            }
+
             String originalName = file.getOriginalFilename();
             String newName = (originalName != null && originalName.contains(".")) 
                              ? originalName.substring(0, originalName.lastIndexOf(".")) + ".pdf" 

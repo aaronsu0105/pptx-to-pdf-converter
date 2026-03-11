@@ -1,69 +1,128 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Aaron's High-Res Converter</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aaron's High-Res PDF Converter</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; flex-direction: column; align-items: center; padding: 50px; background-color: #f0f2f5; }
-        .card { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); text-align: center; width: 400px; }
-        h2 { color: #1a73e8; margin-bottom: 25px; }
-        input[type="file"] { margin-bottom: 20px; border: 1px solid #ddd; padding: 10px; width: 100%; border-radius: 4px; }
-        button { background-color: #1a73e8; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; }
-        button:disabled { background-color: #ccc; }
-        .loader { border: 4px solid #f3f3f3; border-top: 4px solid #1a73e8; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; display: none; margin: 20px auto; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        #status { margin-top: 15px; font-size: 14px; color: #555; }
+        .glass { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); }
+        .drop-zone--over { border-color: #3b82f6; background: #eff6ff; }
+        @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-10px); } 100% { transform: translateY(0px); } }
+        .float-icon { animation: float 3s ease-in-out infinite; }
     </style>
 </head>
-<body>
-    <div class="card">
-        <h2>PPTX to PDF</h2>
-        <input type="file" id="fileInput" accept=".pptx">
-        <button id="btn" onclick="convert()">Convert to High-Res PDF</button>
-        <div class="loader" id="loader"></div>
-        <div id="status">Ready to convert</div>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen flex items-center justify-center p-6">
+
+    <div class="glass max-w-xl w-full rounded-3xl shadow-2xl p-8 border border-white/50">
+        <div class="text-center mb-10">
+            <div class="inline-block p-4 bg-blue-600 rounded-2xl shadow-lg mb-4 float-icon">
+                <i class="fas fa-file-pdf text-3xl text-white"></i>
+            </div>
+            <h1 class="text-3xl font-extrabold text-gray-800 tracking-tight">Pro PPTX Converter</h1>
+            <p class="text-gray-500 mt-2 font-medium">Vector-quality PDF rendering for Med Sci</p>
+        </div>
+
+        <div id="dropZone" class="border-2 border-dashed border-gray-300 rounded-2xl p-10 text-center transition-all cursor-pointer hover:border-blue-400 hover:bg-blue-50/50 group">
+            <input type="file" id="fileInput" class="hidden" accept=".pptx">
+            <i class="fas fa-cloud-upload-alt text-5xl text-gray-300 group-hover:text-blue-500 mb-4 transition-colors"></i>
+            <p id="fileName" class="text-gray-600 font-medium">Drag & drop your presentation or <span class="text-blue-600">browse</span></p>
+            <p class="text-xs text-gray-400 mt-2">Maximum file size: 50MB</p>
+        </div>
+
+        <div id="progressWrapper" class="hidden mt-8">
+            <div class="flex justify-between mb-2">
+                <span id="statusText" class="text-sm font-semibold text-blue-700">Converting...</span>
+                <span id="percentText" class="text-sm font-semibold text-blue-700">0%</span>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-2.5">
+                <div id="progressBar" class="bg-blue-600 h-2.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+            </div>
+        </div>
+
+        <button id="convertBtn" onclick="convert()" class="w-full mt-8 bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-lg shadow-blue-200 transition-all active:scale-95 flex items-center justify-center space-x-2">
+            <span>Generate High-Res PDF</span>
+            <i class="fas fa-arrow-right"></i>
+        </button>
+
+        <footer class="mt-8 text-center text-gray-400 text-sm">
+            &copy; 2026 Aaron Su • Western University
+        </footer>
     </div>
 
     <script>
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const fileNameDisplay = document.getElementById('fileName');
+
+        // Trigger file input on click
+        dropZone.onclick = () => fileInput.click();
+
+        // Handle Drag & Drop
+        dropZone.ondragover = (e) => { e.preventDefault(); dropZone.classList.add('drop-zone--over'); };
+        dropZone.ondragleave = () => dropZone.classList.remove('drop-zone--over');
+        dropZone.ondrop = (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('drop-zone--over');
+            if (e.dataTransfer.files.length) {
+                fileInput.files = e.dataTransfer.files;
+                updateFileName();
+            }
+        };
+
+        fileInput.onchange = updateFileName;
+
+        function updateFileName() {
+            if (fileInput.files[0]) {
+                fileNameDisplay.innerHTML = `<span class="text-blue-600 font-bold">${fileInput.files[0].name}</span>`;
+            }
+        }
+
         async function convert() {
-            const input = document.getElementById('fileInput');
-            const btn = document.getElementById('btn');
-            const loader = document.getElementById('loader');
-            const status = document.getElementById('status');
+            const file = fileInput.files[0];
+            if (!file) return alert("Please select a file first!");
 
-            if (!input.files[0]) return alert("Select a file first!");
+            const btn = document.getElementById('convertBtn');
+            const wrapper = document.getElementById('progressWrapper');
+            const bar = document.getElementById('progressBar');
+            const status = document.getElementById('statusText');
 
-            // UI Feedback
+            // UI Reset
             btn.disabled = true;
-            loader.style.display = "block";
-            status.innerText = "Processing high-res rendering...";
+            btn.classList.add('opacity-50', 'cursor-not-allowed');
+            wrapper.classList.remove('hidden');
+            bar.style.width = '30%';
+            status.innerText = "Uploading to server...";
 
             const formData = new FormData();
-            formData.append("file", input.files[0]);
+            formData.append("file", file);
 
             try {
                 const response = await fetch('/api/convert', { method: 'POST', body: formData });
                 
+                bar.style.width = '70%';
+                status.innerText = "Rendering Vector PDF...";
+
                 if (response.ok) {
                     const blob = await response.blob();
-                    const url = window.URL.createObjectURL(blob);
+                    bar.style.width = '100%';
+                    status.innerText = "Download complete!";
                     
-                    // Get filename from header or fallback
-                    const contentDisp = response.headers.get('Content-Disposition');
-                    const fileName = contentDisp ? contentDisp.split('filename=')[1].replace(/"/g, '') : "converted.pdf";
-
+                    const url = window.URL.createObjectURL(blob);
                     const a = document.createElement('a');
                     a.href = url;
-                    a.download = fileName;
+                    a.download = file.name.replace(".pptx", ".pdf");
                     a.click();
-                    status.innerText = "Conversion Successful!";
                 } else {
-                    status.innerText = "Server Error. Check file size.";
+                    status.innerText = "Conversion failed.";
+                    status.classList.add('text-red-500');
                 }
             } catch (e) {
-                status.innerText = "Connection failed.";
+                status.innerText = "Network error.";
             } finally {
                 btn.disabled = false;
-                loader.style.display = "none";
+                btn.classList.remove('opacity-50', 'cursor-not-allowed');
             }
         }
     </script>

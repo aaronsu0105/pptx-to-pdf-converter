@@ -1,40 +1,39 @@
 package com.aaron.converter;
 
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.entity.mime.MultipartEntityBuilder;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.classic.HttpClients;
+import org.apache.hc.core5.http.io.entity.EntityUtils;
 import org.springframework.stereotype.Service;
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.net.http.HttpRequest.BodyPublishers;
 import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
 
 @Service
 public class ConversionService {
 
-    // You can use a free Gotenberg instance or a similar API
-    private static final String CONVERT_URL = "https://demo.gotenberg.dev/forms/libreoffice/convert";
+    private static final String GOTENBERG_URL = "https://demo.gotenberg.dev/forms/libreoffice/convert";
 
     public byte[] convertPptxToPdf(InputStream pptxStream, String fileName) throws Exception {
-        // We create a temporary file to send to the API
-        Path tempFile = Files.createTempFile("upload-", fileName);
-        Files.copy(pptxStream, tempFile, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+        // Use a try-with-resources to ensure the connection closes properly
+        try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
+            HttpPost uploadFile = new HttpPost(GOTENBERG_URL);
+            
+            // Build the request exactly how Gotenberg expects it
+            MultipartEntityBuilder builder = MultipartEntityBuilder.create();
+            builder.addBinaryBody("files", pptxStream, 
+                org.apache.hc.core5.http.ContentType.APPLICATION_OCTET_STREAM, fileName);
+            
+            uploadFile.setEntity(builder.build());
 
-        try (HttpClient client = HttpClient.newHttpClient()) {
-            // This is a simplified Multi-part request logic
-            // In a real live app, you'd use a library like Apache HttpComponents
-            // For now, let's keep it lean and direct
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(CONVERT_URL))
-                    .header("Content-Type", "multipart/form-data") 
-                    .POST(BodyPublishers.ofFile(tempFile))
-                    .build();
-
-            HttpResponse<byte[]> response = client.send(request, HttpResponse.BodyHandlers.ofByteArray());
-            return response.body();
-        } finally {
-            Files.deleteIfExists(tempFile); // Keep the server clean!
+            return httpClient.execute(uploadFile, response -> {
+                int status = response.getCode();
+                if (status >= 200 && status < 300) {
+                    return EntityUtils.toByteArray(response.getEntity());
+                } else {
+                    // This catches if the API is down or file is too big
+                    throw new RuntimeException("API Error: " + status);
+                }
+            });
         }
     }
 }

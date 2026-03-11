@@ -3,59 +3,72 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aaron's Pro PDF Converter</title>
+    <title>Aaron Su | High-Res PDF Engine</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
-        // Configure Tailwind to use CSS classes for dark mode
-        tailwind.config = {
-            darkMode: 'class',
-        }
+        tailwind.config = { darkMode: 'class' }
     </script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    
     <style>
-        .glass { backdrop-filter: blur(16px); }
-        .drop-zone--over { border-color: #3b82f6 !important; transform: scale(1.02); }
+        .glass { backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
+        .drop-zone--over { border-color: #3b82f6 !important; transform: scale(1.02); background-color: rgba(59, 130, 246, 0.05); }
         @keyframes float { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-8px); } }
         .float-icon { animation: float 3s ease-in-out infinite; }
-        .history-item { animation: slideIn 0.3s ease-out; }
-        @keyframes slideIn { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
+        .slide-in { animation: slideIn 0.3s ease-out forwards; }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
         
-        /* Custom scrollbar for history */
+        /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         .dark ::-webkit-scrollbar-thumb { background: #475569; }
     </style>
 </head>
-<body class="bg-gradient-to-br from-slate-100 to-blue-100 dark:from-slate-900 dark:to-slate-800 min-h-screen flex flex-col items-center justify-center p-4 md:p-10 transition-colors duration-500 font-sans">
+<body class="bg-gradient-to-br from-slate-50 to-blue-100 dark:from-slate-900 dark:to-slate-800 min-h-screen flex flex-col items-center transition-colors duration-500 font-sans pt-24 pb-10 px-4">
 
-    <div class="absolute top-6 right-6">
-        <button id="themeToggle" class="p-3 rounded-full bg-white dark:bg-slate-800 shadow-lg text-slate-500 dark:text-yellow-400 hover:scale-110 transition-transform focus:outline-none">
-            <i class="fas fa-moon dark:hidden text-xl"></i>
-            <i class="fas fa-sun hidden dark:block text-xl"></i>
-        </button>
-    </div>
+    <nav class="fixed top-0 w-full glass bg-white/70 dark:bg-slate-900/70 border-b border-slate-200 dark:border-slate-700 z-50 transition-colors">
+        <div class="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="bg-blue-600 text-white p-2 rounded-lg"><i class="fas fa-layer-group"></i></div>
+                <span class="font-black text-slate-800 dark:text-white tracking-tight uppercase text-lg">Aaron Su</span>
+                <span class="hidden sm:inline-block px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 text-[10px] font-bold tracking-wider uppercase border border-blue-200 dark:border-blue-800">Su Family Tech</span>
+            </div>
+            <div class="flex items-center space-x-4">
+                <a href="https://github.com" target="_blank" class="text-slate-400 hover:text-slate-800 dark:hover:text-white transition-colors">
+                    <i class="fab fa-github text-xl"></i>
+                </a>
+                <button id="themeToggle" class="p-2 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-yellow-400 hover:scale-110 transition-transform focus:outline-none">
+                    <i class="fas fa-moon dark:hidden"></i>
+                    <i class="fas fa-sun hidden dark:block"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
 
-    <div class="glass bg-white/80 dark:bg-slate-800/80 max-w-2xl w-full rounded-[2rem] shadow-2xl p-8 border border-white/50 dark:border-slate-700 transition-colors duration-500">
+    <div id="toastContainer" class="fixed bottom-6 right-6 z-50 flex flex-col space-y-3"></div>
+
+    <div class="glass bg-white/80 dark:bg-slate-800/80 max-w-2xl w-full rounded-[2rem] shadow-2xl p-8 border border-white/50 dark:border-slate-700 transition-colors duration-500 relative overflow-hidden">
         
-        <div class="text-center mb-8">
+        <div class="text-center mb-8 relative z-10">
             <div class="inline-block p-4 bg-blue-600 rounded-2xl shadow-lg mb-4 float-icon">
                 <i class="fas fa-file-pdf text-3xl text-white"></i>
             </div>
-            <h1 class="text-3xl font-black text-slate-800 dark:text-white tracking-tight uppercase transition-colors">High-Res Converter</h1>
-            <p class="text-slate-500 dark:text-slate-400 mt-2 font-medium italic transition-colors">Vector-quality rendering for Western Med Sci</p>
+            <h1 class="text-3xl font-black text-slate-800 dark:text-white tracking-tight uppercase transition-colors">Vector PDF Engine</h1>
+            <p class="text-slate-500 dark:text-slate-400 mt-2 font-medium italic transition-colors">Optimized rendering for Med Sci diagrams</p>
         </div>
 
-        <div id="dropZone" class="border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-2xl p-12 text-center transition-all cursor-pointer hover:border-blue-500 dark:hover:border-blue-400 hover:bg-blue-50/50 dark:hover:bg-slate-700/50 group relative">
+        <div id="dropZone" class="border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-2xl p-10 text-center transition-all cursor-pointer hover:border-blue-500 dark:hover:border-blue-400 group relative z-10">
             <input type="file" id="fileInput" class="hidden" accept=".pptx">
             <div id="uploadContent">
                 <i class="fas fa-cloud-arrow-up text-5xl text-slate-300 dark:text-slate-500 group-hover:text-blue-500 dark:group-hover:text-blue-400 mb-4 transition-colors"></i>
                 <p id="fileName" class="text-slate-600 dark:text-slate-300 font-semibold text-lg transition-colors">Drop PPTX here or <span class="text-blue-600 dark:text-blue-400 underline">browse</span></p>
-                <p class="text-xs text-slate-400 dark:text-slate-500 mt-2 italic transition-colors">Optimized for high-detail diagrams</p>
+                <p class="text-xs text-slate-400 dark:text-slate-500 mt-2 italic transition-colors">Auto-detects file complexity</p>
             </div>
         </div>
 
-        <div id="progressWrapper" class="hidden mt-8 space-y-3">
+        <div id="progressWrapper" class="hidden mt-8 space-y-3 z-10 relative">
             <div class="flex justify-between items-end">
                 <div class="space-y-1">
                     <span id="statusText" class="text-sm font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider">Processing...</span>
@@ -68,40 +81,51 @@
             </div>
         </div>
 
-        <button id="convertBtn" onclick="convert()" class="w-full mt-8 bg-slate-900 dark:bg-blue-600 hover:bg-blue-600 dark:hover:bg-blue-500 text-white font-black py-4 rounded-xl shadow-xl transition-all active:scale-95 flex items-center justify-center space-x-3 group">
+        <button id="convertBtn" onclick="convert()" class="w-full mt-8 bg-slate-900 dark:bg-blue-600 hover:bg-blue-600 dark:hover:bg-blue-500 text-white font-black py-4 rounded-xl shadow-xl transition-all active:scale-95 flex items-center justify-center space-x-3 group z-10 relative">
             <span class="uppercase tracking-widest">Convert to PDF</span>
             <i class="fas fa-bolt group-hover:text-yellow-400 transition-colors"></i>
         </button>
 
-        <div id="historySection" class="hidden mt-10 pt-6 border-t border-slate-200 dark:border-slate-700 transition-colors">
+        <div id="historySection" class="hidden mt-10 pt-6 border-t border-slate-200 dark:border-slate-700 transition-colors z-10 relative">
             <h3 class="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-4">Recent Sessions</h3>
-            <div id="historyList" class="space-y-2 max-h-32 overflow-y-auto pr-2">
-                </div>
+            <div id="historyList" class="space-y-2 max-h-32 overflow-y-auto pr-2"></div>
         </div>
-
-        <footer class="mt-8 text-center">
-            <p class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] transition-colors">&copy; 2026 Aaron Su • University of Western Ontario</p>
-        </footer>
     </div>
+
+    <footer class="mt-8 text-center">
+        <p class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] transition-colors">&copy; 2026 Aaron Su • Western University</p>
+    </footer>
 
     <script>
         // --- Dark Mode Logic ---
         const themeToggleBtn = document.getElementById('themeToggle');
         const htmlElement = document.documentElement;
-
-        // Check local storage for theme preference
         if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
             htmlElement.classList.add('dark');
         }
-
         themeToggleBtn.addEventListener('click', () => {
             htmlElement.classList.toggle('dark');
-            if (htmlElement.classList.contains('dark')) {
-                localStorage.setItem('theme', 'dark');
-            } else {
-                localStorage.setItem('theme', 'light');
-            }
+            localStorage.setItem('theme', htmlElement.classList.contains('dark') ? 'dark' : 'light');
         });
+
+        // --- Toast Notifications ---
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            const icon = type === 'success' ? '<i class="fas fa-check-circle text-green-500 text-xl"></i>' : '<i class="fas fa-exclamation-circle text-red-500 text-xl"></i>';
+            const bg = document.documentElement.classList.contains('dark') ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-200 text-slate-800';
+            
+            toast.className = `slide-in flex items-center space-x-3 p-4 rounded-xl shadow-2xl border ${bg}`;
+            toast.innerHTML = `${icon} <span class="font-bold text-sm">${message}</span>`;
+            
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(20px)';
+                toast.style.transition = 'all 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
 
         // --- Core Application Logic ---
         const dropZone = document.getElementById('dropZone');
@@ -111,7 +135,6 @@
         const historySection = document.getElementById('historySection');
 
         dropZone.onclick = () => fileInput.click();
-
         dropZone.ondragover = (e) => { e.preventDefault(); dropZone.classList.add('drop-zone--over'); };
         dropZone.ondragleave = () => dropZone.classList.remove('drop-zone--over');
         dropZone.ondrop = (e) => {
@@ -127,29 +150,49 @@
 
         function updateFileName() {
             if (fileInput.files[0]) {
-                const name = fileInput.files[0].name;
-                fileNameDisplay.innerHTML = `Selected: <span class="text-blue-600 dark:text-blue-400 font-black">${name}</span>`;
+                const file = fileInput.files[0];
+                const sizeInMB = (file.size / (1024 * 1024)).toFixed(2);
+                
+                let sizeColor = "text-green-500 dark:text-green-400";
+                let warningHtml = "";
+                
+                if (sizeInMB > 10) {
+                    sizeColor = "text-red-500 dark:text-red-400";
+                    warningHtml = `<p class="text-[10px] text-red-500 mt-2 font-bold uppercase"><i class="fas fa-exclamation-triangle"></i> Heavy File: Demo server may time out</p>`;
+                } else if (sizeInMB > 5) {
+                    sizeColor = "text-yellow-500 dark:text-yellow-400";
+                    warningHtml = `<p class="text-[10px] text-yellow-600 dark:text-yellow-400 mt-2 font-bold uppercase"><i class="fas fa-exclamation-circle"></i> Large File: Processing may take longer</p>`;
+                }
+
+                fileNameDisplay.innerHTML = `
+                    Selected: <span class="text-blue-600 dark:text-blue-400 font-black">${file.name}</span>
+                    <div class="mt-1 text-sm font-bold ${sizeColor}">${sizeInMB} MB</div>
+                    ${warningHtml}
+                `;
             }
         }
 
-        function addToHistory(name) {
+        function addToHistory(name, size) {
             historySection.classList.remove('hidden');
             const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
             const item = document.createElement('div');
-            item.className = "history-item flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg border border-slate-100 dark:border-slate-600 transition-colors";
+            item.className = "slide-in flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg border border-slate-100 dark:border-slate-600";
             item.innerHTML = `
                 <div class="flex items-center space-x-3 overflow-hidden">
-                    <i class="fas fa-check-circle text-green-500 dark:text-green-400 flex-shrink-0"></i>
-                    <span class="text-sm font-medium text-slate-700 dark:text-slate-200 truncate">${name}</span>
+                    <i class="fas fa-file-pdf text-red-500 flex-shrink-0"></i>
+                    <div class="flex flex-col">
+                        <span class="text-sm font-bold text-slate-700 dark:text-slate-200 truncate max-w-[180px] md:max-w-[300px]">${name}</span>
+                        <span class="text-[10px] font-bold text-slate-400 uppercase">${size} MB</span>
+                    </div>
                 </div>
-                <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase ml-2 flex-shrink-0">${now}</span>
+                <span class="text-[10px] font-bold text-slate-400 uppercase ml-2 flex-shrink-0">${now}</span>
             `;
             historyList.prepend(item);
         }
 
         async function convert() {
             const file = fileInput.files[0];
-            if (!file) return alert("Select a PowerPoint file first!");
+            if (!file) return showToast("Select a PowerPoint file first!", "error");
 
             const btn = document.getElementById('convertBtn');
             const wrapper = document.getElementById('progressWrapper');
@@ -163,11 +206,10 @@
             btn.classList.add('opacity-50');
             wrapper.classList.remove('hidden');
             
-            // Phase 1: Upload
             bar.style.width = '30%';
             percentText.innerText = '30%';
             status.innerText = "Uploading...";
-            subStatus.innerText = "Sending file to secure server";
+            subStatus.innerText = "Sending file to server";
             status.className = "text-sm font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider";
             bar.className = "bg-blue-600 dark:bg-blue-500 h-full rounded-full transition-all duration-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]";
 
@@ -177,29 +219,27 @@
             try {
                 const response = await fetch('/api/convert', { method: 'POST', body: formData });
                 
-                // Phase 2: Processing
-                bar.style.width = '75%';
-                percentText.innerText = '75%';
-                status.innerText = "Rendering...";
+                bar.style.width = '80%';
+                percentText.innerText = '80%';
+                status.innerText = "Rendering PDF...";
                 subStatus.innerText = "Applying vector transformation";
 
                 if (response.ok) {
                     const blob = await response.blob();
                     
-                    // Critical Fix: Verify we actually got a PDF and not an API error text
                     if (blob.type !== "application/pdf") {
-                        throw new Error("Invalid response from engine. File may be too large.");
+                        throw new Error("Server busy. Try a smaller file.");
                     }
 
                     const url = window.URL.createObjectURL(blob);
                     const a = document.createElement('a');
                     a.href = url;
-                    a.download = file.name.replace(/\.[^/.]+$/, "") + ".pdf"; // Better regex to replace extension
+                    a.download = file.name.replace(/\.[^/.]+$/, "") + ".pdf";
                     document.body.appendChild(a);
                     a.click();
                     a.remove();
 
-                    // Success UI
+                    // Success UI & Confetti
                     bar.style.width = '100%';
                     percentText.innerText = '100%';
                     status.innerText = "Success!";
@@ -208,17 +248,24 @@
                     bar.classList.replace('bg-blue-600', 'bg-green-500');
                     bar.classList.replace('dark:bg-blue-500', 'dark:bg-green-500');
                     subStatus.innerText = "File saved to downloads";
-                    addToHistory(file.name);
+                    
+                    const sizeInMB = (file.size / (1024 * 1024)).toFixed(2);
+                    addToHistory(file.name, sizeInMB);
+                    showToast("PDF converted successfully!", "success");
+                    
+                    confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 }, colors: ['#3b82f6', '#10b981', '#fbbf24'] });
+
                 } else {
-                    throw new Error("Engine timeout or server busy.");
+                    throw new Error("Engine timeout or server overloaded.");
                 }
             } catch (e) {
-                status.innerText = "Error";
+                status.innerText = "Conversion Failed";
                 status.classList.replace('text-blue-600', 'text-red-600');
                 status.classList.replace('dark:text-blue-400', 'dark:text-red-400');
                 subStatus.innerText = e.message;
                 bar.classList.replace('bg-blue-600', 'bg-red-500');
                 bar.classList.replace('dark:bg-blue-500', 'dark:bg-red-500');
+                showToast(e.message, "error");
             } finally {
                 btn.disabled = false;
                 btn.classList.remove('opacity-50');

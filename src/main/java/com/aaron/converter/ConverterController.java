@@ -18,9 +18,10 @@ public class ConverterController {
         }
 
         try {
-            System.out.println("Processing: " + file.getOriginalFilename());
+            System.out.println("Processing file: " + file.getOriginalFilename());
 
-            byte[] pdfBytes = conversionService.convertPptxToPdf(file.getInputStream());
+            // FIX: We are now passing TWO things: the file stream AND the filename
+            byte[] pdfBytes = conversionService.convertPptxToPdf(file.getInputStream(), file.getOriginalFilename());
 
             // Filename Logic: Replace .pptx with .pdf
             String originalName = file.getOriginalFilename();
